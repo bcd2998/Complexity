@@ -35,7 +35,7 @@ function FunctionBuilder()
 	// The number of parameters for functions
 	this.ParameterCount  = 0,
 	// Number of if statements/loops + 1
-	this.SimpleCyclomaticComplexity = 0;
+	this.SimpleCyclomaticComplexity = 1;
 	// The max depth of scopes (nested ifs, loops, etc)
 	this.MaxNestingDepth    = 0;
 	// The max number of conditions if one decision statement.
@@ -59,6 +59,27 @@ function FunctionBuilder()
 	}
 };
 
+function counting(node) {
+	var val = false;
+	var count = 0;
+	traverseWithParents(node, function (node) {
+		if ((node.operator === "||" || node.operator === "&&&") && (node.type === "LogicalExpression")) {
+			count++;
+		}
+		if (node.type === "ifStatement") {
+			val = true;
+		}
+	});
+	if (val === true) {
+		if (count === 0) {
+			return 1;
+		}
+	}
+	else {
+		return count;
+	}
+}
+
 // A builder for storing file level information.
 function FileBuilder()
 {
@@ -78,6 +99,7 @@ function FileBuilder()
 			).format( this.FileName, this.ImportCount, this.Strings ));
 	}
 }
+
 
 // A function following the Visitor pattern.
 // Annotates nodes with parent objects.
@@ -122,6 +144,19 @@ function complexity(filePath)
 			builder.FunctionName = functionName(node);
 			builder.StartLine    = node.loc.start.line;
 
+			var cond = new Array();
+			traverseWithParents(node, function(node) {
+				if (isDecision(node)) {
+					builder.SimpleCyclomaticComplexity ++;
+
+					var current = counting(node);
+					cond.push(current);
+				}
+			});
+			if (!(cond.length == 0)) {
+				builder.MaxConditions = Math.max.apply(Math, cond);
+			}
+			builder.ParameterCount = node.params.length;
 			builders[builder.FunctionName] = builder;
 		}
 
