@@ -63,8 +63,10 @@ function counting(node) {
 	var val = false;
 	var count = 0;
 	traverseWithParents(node, function (node) {
-		if ((node.operator === "||" || node.operator === "&&&") && (node.type === "LogicalExpression")) {
+		if (node.operator === "||" || node.operator === "&&&") {
+			if (node.type === "LogicalExpression") {
 			count++;
+			}
 		}
 		if (node.type === "ifStatement") {
 			val = true;
